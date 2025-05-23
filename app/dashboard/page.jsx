@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -74,14 +74,21 @@ const booksIssuedOptions = {
 };
 
 export default function AdminDashboard() {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        setVisible(true);
+        return () => setVisible(false);
+    }, []);
+
     return (
         <main className="min-h-screen w-full flex font-mono bg-black">
-            {/* Plain Futuristic Sidebar */}
+            {/* Sidebar */}
             <aside className="w-56 min-h-screen bg-black border-r border-cyan-900 flex flex-col py-8 px-4 z-20 fixed left-0 top-0">
-                <h2 className="text-xl font-bold text-cyan-400 mb-8 text-center tracking-widest uppercase">ADMIN</h2>
+                <h2 className="text-xl font-bold text-cyan-400 mb-8 text-center tracking-widest uppercase">ADMIN MENU</h2>
                 <nav>
                     <ul className="flex flex-col gap-2">
-                        {dashboardNav.map((item) => (
+                        {dashboardNav.map((item, idx) => (
                             <li key={item.href}>
                                 <Link
                                     href={item.href}
@@ -96,16 +103,17 @@ export default function AdminDashboard() {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 ml-56 relative z-10 w-full max-w-7xl mx-auto p-8">
-                <h1 className="text-3xl md:text-4xl font-extrabold mb-10 text-cyan-300 text-center tracking-widest uppercase">
+            <div className={`flex-1 ml-56 relative z-10 w-full max-w-7xl mx-auto p-8 transition-opacity duration-700 ${visible ? "opacity-100" : "opacity-0"} animate-slide-up`}>
+                <h1 className="text-3xl md:text-4xl font-extrabold mb-10 text-cyan-300 text-center tracking-widest uppercase animate-fade-in" style={{ animationDelay: "0.2s", animationFillMode: "backwards" }}>
                     Admin Dashboard
                 </h1>
                 {/* Stats Section */}
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    {stats.map((stat) => (
+                    {stats.map((stat, idx) => (
                         <div
                             key={stat.label}
-                            className="rounded-lg border border-cyan-900 bg-black text-cyan-200 p-6 text-center font-semibold"
+                            className="rounded-lg border border-cyan-900 bg-black text-cyan-200 p-6 text-center font-semibold animate-fade-in"
+                            style={{ animationDelay: `${0.3 + idx * 0.1}s`, animationFillMode: "backwards" }}
                         >
                             <div className="text-2xl font-extrabold mb-2">{stat.value}</div>
                             <div className="text-sm uppercase tracking-widest">{stat.label}</div>
@@ -114,12 +122,12 @@ export default function AdminDashboard() {
                 </section>
 
                 {/* Graph Section */}
-                <section className="bg-black border border-cyan-900 rounded-lg p-6 mb-8">
+                <section className="bg-black border border-cyan-900 rounded-lg p-6 mb-8 animate-fade-in" style={{ animationDelay: "0.7s", animationFillMode: "backwards" }}>
                   <Bar data={booksIssuedData} options={booksIssuedOptions} />
                 </section>
 
                 {/* Recent Transactions */}
-                <section className="bg-black border border-cyan-900 rounded-lg p-6">
+                <section className="bg-black border border-cyan-900 rounded-lg p-6 animate-fade-in" style={{ animationDelay: "0.8s", animationFillMode: "backwards" }}>
                     <h2 className="text-lg font-bold mb-4 text-cyan-300 tracking-widest uppercase">Recent Transactions</h2>
                     <table className="w-full text-left text-cyan-200 font-mono">
                         <thead>
@@ -132,7 +140,7 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody>
                             {recentTransactions.map((tx, idx) => (
-                                <tr key={idx} className="border-t border-cyan-900">
+                                <tr key={idx} className="border-t border-cyan-900 animate-fade-in" style={{ animationDelay: `${0.9 + idx * 0.1}s`, animationFillMode: "backwards" }}>
                                     <td className="py-2">{tx.member}</td>
                                     <td className="py-2">{tx.book}</td>
                                     <td className="py-2">
@@ -151,6 +159,22 @@ export default function AdminDashboard() {
                     </table>
                 </section>
             </div>
+            <style jsx global>{`
+                @keyframes fade-in {
+                  from { opacity: 0 }
+                  to { opacity: 1 }
+                }
+                .animate-fade-in {
+                  animation: fade-in 0.8s cubic-bezier(.4,0,.2,1) both;
+                }
+                @keyframes slide-up {
+                  from { transform: translateY(40px); opacity: 0 }
+                  to { transform: translateY(0); opacity: 1 }
+                }
+                .animate-slide-up {
+                  animation: slide-up 0.8s cubic-bezier(.4,0,.2,1) both;
+                }
+            `}</style>
         </main>
     );
 }
