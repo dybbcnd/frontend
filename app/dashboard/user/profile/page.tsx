@@ -1,29 +1,54 @@
 'use client';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function UserProfile() {
-  const [user, setUser] = useState({
-    name: "Jane Doe",
-    username: "janedoe",
-    email: "jane.doe@example.com",
-    memberId: "U123456",
-    joined: "2023-01-15",
-    avatar: "/avatar-default.png",
-    bio: "Avid reader and tech enthusiast. Loves JavaScript, React, and open source.",
-    location: "San Francisco, CA",
-    website: "https://janedoe.dev",
-  });
+  const [user, setUser] = useState<any>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState(user);
+  const [form, setForm] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const res = await fetch(`${API_URL}/user/profile`, {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to fetch user");
+        const data = await res.json();
+        setUser(data);
+        setForm(data);
+      } catch (err) {
+        setUser(null);
+      }
+      setLoading(false);
+    }
+    fetchUser();
+  }, []);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setUser(form);
-    setEditing(false);
+    setLoading(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const res = await fetch(`${API_URL}/user/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error("Failed to update profile");
+      const updated = await res.json();
+      setUser(updated);
+      setForm(updated);
+      setEditing(false);
+    } catch (err) {
+    }
+    setLoading(false);
   }
 
   // Sidebar links
@@ -31,8 +56,24 @@ export default function UserProfile() {
     { label: "Profile", href: "/dashboard/user/profile" },
     { label: "My Books", href: "/dashboard/user/books" },
     { label: "Transactions", href: "/dashboard/user/transactions" },
-    { label: "Settings", href: "/dashboard/user/settings" },
+    { label: "Logout", href: "/auth" },
   ];
+
+  if (loading) {
+    return (
+      <main className="min-h-screen w-full flex items-center justify-center bg-gray-100">
+        <div>Loading...</div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="min-h-screen w-full flex items-center justify-center bg-gray-100">
+        <div className="text-gray-700">User not found or not logged in.</div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen w-full flex bg-gray-100 relative">
@@ -68,7 +109,7 @@ export default function UserProfile() {
         />
         <div className="bg-gray-400 border border-gray-200 rounded-xl shadow p-8 max-w-md w-full flex flex-col items-center">
           <img
-            src={user.avatar}
+            src={user.avatar || "/avatar-default.png"}
             alt="User Avatar"
             className="w-24 h-24 rounded-full border border-gray-300 mb-4"
           />
@@ -102,7 +143,7 @@ export default function UserProfile() {
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"
                   >
-                    {user.website.replace(/^https?:\/\//, "")}
+                    {user.website?.replace(/^https?:\/\//, "")}
                   </a>
                 </div>
               </div>

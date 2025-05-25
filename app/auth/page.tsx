@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { myAppHook, AppProvider } from '../Context/AppProvider';
-
-
 
 interface FormData {
   name?: string;
@@ -20,38 +19,57 @@ const Auth: React.FC = () => {
     password: '',
     password_confirmation: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const { login, register } = myAppHook();
-
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  setFormData({
-    ...formData,
-    [e.target.name]: e.target.value
-  });
-};
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage(null);
 
     if (isLogin) {
       try {
-        await login(formData.email, formData.password);
-      } catch (error) {
-        console.log('Login failed:', error);
+        const user = await login(formData.email, formData.password);
+        setMessage("Login successful!");
+        if (user?.role === "admin") {
+          router.push("/dashboard/admin");
+        } else {
+          router.push("/dashboard/user/profile");
+        }
+      } catch (error: any) {
+        setMessage(error?.message || 'Login failed.');
       }
     } else {
-      // Validate required fields
       if (!formData.name || !formData.password_confirmation) {
-        console.log('Please fill all required fields.');
+        setMessage('Please fill all required fields.');
+        setLoading(false);
         return;
       }
       try {
         await register(formData.name, formData.email, formData.password, formData.password_confirmation);
-      } catch (error) {
-        console.log('Registration failed:', error);
+        setMessage("Registration successful! You can now log in.");
+        setIsLogin(true);
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          password_confirmation: '',
+        });
+      } catch (error: any) {
+        setMessage(error?.message || 'Registration failed.');
       }
     }
+    setLoading(false);
   };
 
   const handleModeSwitch = () => {
@@ -62,79 +80,87 @@ const Auth: React.FC = () => {
       password: '',
       password_confirmation: '',
     });
+    setMessage(null);
   };
 
   return (
-  <div
-    className="flex justify-center items-center min-h-screen bg-cover bg-center animate-fade-in"
-    style={{ backgroundImage: "url('/main.jpg')" }}
-  >
-    <div className="bg-gray-700/65 backdrop-blur-md p-6 rounded-lg shadow-md w-full max-w-md animate-fade-in delay-100">
-      <h3 className="text-2xl font-semibold text-center mb-4 animate-fade-in delay-200">
-        {isLogin ? 'Login' : 'Register'}
-      </h3>
-
-      <form className="space-y-3 mb-6 animate-fade-in delay-300" onSubmit={handleFormSubmit}>
-        {!isLogin && (
-          <input
-            className="w-full p-3 border border-gray-300 opacity-100 rounded"
-            name="name"
-            type="text"
-            placeholder="Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        )}
-        <input
-          className="w-full p-3 border border-gray-300 opacity-100 rounded"
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          className="w-full p-3 border border-gray-300 opacity-100 rounded"
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        {!isLogin && (
-          <input
-            className="w-full p-3 border border-gray-300 opacity-100 rounded"
-            name="password_confirmation"
-            type="password"
-            placeholder="Confirm Password"
-            value={formData.password_confirmation}
-            onChange={handleChange}
-            required
-          />
-        )}
-        <button
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded animate-fade-in delay-400"
-          type="submit"
-        >
+    <div
+      className="flex justify-center items-center min-h-screen bg-cover bg-center animate-fade-in"
+      style={{ backgroundImage: "url('/main.jpg')" }}
+    >
+      <div className="bg-gray-700/65 backdrop-blur-md p-6 rounded-lg shadow-md w-full max-w-md animate-fade-in delay-100">
+        <h3 className="text-2xl font-semibold text-center mb-4 animate-fade-in delay-200">
           {isLogin ? 'Login' : 'Register'}
-        </button>
-      </form>
+        </h3>
 
-      <p className="text-center text-sm animate-fade-in delay-500">
-        {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-        <span
-          className="text-blue-500 cursor-pointer underline"
-          onClick={handleModeSwitch}
-        >
-          {isLogin ? 'Register' : 'Login'}
-        </span>
-      </p>
+        <form className="space-y-3 mb-6 animate-fade-in delay-300" onSubmit={handleFormSubmit}>
+          {!isLogin && (
+            <input
+              className="w-full p-3 border border-gray-300 opacity-100 rounded"
+              name="name"
+              type="text"
+              placeholder="Name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+          )}
+          <input
+            className="w-full p-3 border border-gray-300 opacity-100 rounded"
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className="w-full p-3 border border-gray-300 opacity-100 rounded"
+            name="password"
+            type="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          {!isLogin && (
+            <input
+              className="w-full p-3 border border-gray-300 opacity-100 rounded"
+              name="password_confirmation"
+              type="password"
+              placeholder="Confirm Password"
+              value={formData.password_confirmation}
+              onChange={handleChange}
+              required
+            />
+          )}
+          <button
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded animate-fade-in delay-400 disabled:opacity-60"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? (isLogin ? 'Logging in...' : 'Registering...') : (isLogin ? 'Login' : 'Register')}
+          </button>
+        </form>
+
+        {message && (
+          <div className="mb-4 text-center text-sm text-white bg-blue-900/70 rounded p-2 animate-fade-in delay-500">
+            {message}
+          </div>
+        )}
+
+        <p className="text-center text-sm animate-fade-in delay-500">
+          {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
+          <span
+            className="text-blue-500 cursor-pointer underline"
+            onClick={handleModeSwitch}
+          >
+            {isLogin ? 'Register' : 'Login'}
+          </span>
+        </p>
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default function AuthWithProvider() {
@@ -144,5 +170,3 @@ export default function AuthWithProvider() {
     </AppProvider>
   );
 }
-
-
