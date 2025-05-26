@@ -1,41 +1,32 @@
-"use client";
-
-import React, { createContext, useContext, useState, ReactNode } from "react";
-
-// Define the shape of your context
-interface AppContextType {
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, password_confirmation: string) => Promise<void>;
-}
-
-// Create the context
-const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// Provider component
-export function AppProvider({ children }: { children: ReactNode }) {
-  // Dummy implementations for login and register
-  const login = async (email: string, password: string) => {
-    // Replace with real logic
-    console.log("Logging in:", email, password);
-  };
-
-  const register = async (name: string, email: string, password: string, password_confirmation: string) => {
-    // Replace with real logic
-    console.log("Registering:", name, email, password, password_confirmation);
-  };
-
-  return (
-    <AppContext.Provider value={{ login, register }}>
-      {children}
-    </AppContext.Provider>
-  );
-}
-
-// Custom hook to use the context
 export function myAppHook() {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error("myAppHook must be used within an AppProvider");
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+
+  async function login(email: string, password: string) {
+    const res = await fetch(`${API_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // if backend uses cookies/sessions
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.message || "Login failed");
+    }
+    return res.json(); // should include user info and role
   }
-  return context;
+
+  async function register(name: string, email: string, password: string, password_confirmation: string) {
+    const res = await fetch(`${API_URL}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password, password_confirmation }),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.message || "Registration failed");
+    }
+    return res.json();
+  }
+
+  return { login, register };
 }

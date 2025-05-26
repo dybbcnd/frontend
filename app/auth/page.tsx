@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { myAppHook, AppProvider } from '../Context/AppProvider';
+import { myAppHook } from '../Context/AppProvider';
 
 interface FormData {
   name?: string;
@@ -162,11 +162,3 @@ const Auth: React.FC = () => {
     </div>
   );
 };
-
-export default function AuthWithProvider() {
-  return (
-    <AppProvider>
-      <Auth />
-    </AppProvider>
-  );
-}
